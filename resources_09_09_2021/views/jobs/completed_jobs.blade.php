@@ -1,0 +1,202 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Completed Jobs</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="{{url('/home')}}">Home</a></li>
+                            <li class="breadcrumb-item active"> Completed Jobs</li>
+                        </ol>
+                    </div>
+                </div>
+            </div><!-- /.container-fluid -->
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 col-sm-12">
+                        <div class="card card-primary card-outline card-tabs">
+                            <div class="card-header p-0 pt-1 border-bottom-0">
+                                @include('jobs.jobs_tabs')
+                            </div>
+                            <div class="card-body">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <form action="{{ route('completed_jobs') }}" method="POST">
+                                            {{ csrf_field() }}
+                                            <div class="row">
+                                                <div class="col-2">
+                                                    <input type="date" class="form-control" name="from_date" value="{{$from_date}}">
+                                                </div>
+                                                <label class="col-sm-1 col-form-label float-center">To</label>
+                                                <div class="col-2">
+                                                    <input type="date" class="form-control" name="to_date" value="{{$to_date}}">
+                                                </div>
+                                                <div class="col-5">
+                                                    <input name="search_key" id="search_key" value="{{$search_key}}"
+                                                           placeholder="Enter Search Key"
+                                                           class="form-control" >
+                                                </div>
+                                                <div class="col-2" >
+                                                    <input type="submit" class="btn btn-primary" value="Search">
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                @if(count($jobs) > 0)
+                                <div class="card-body">
+                                        <table id="example1" class="table table-bordered table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th>Job No.</th>
+                                                <th>Job Date</th>
+                                                <th>Member No</th>
+                                                <th>Member Expity Date</th>
+                                                <th>Member Mobile</th>
+                                                <th>Vehicle No</th>
+                                                <th>Customer Name</th>
+                                                <th>AAA Driver / Contractor</th>
+                                                <th>Driver No.</th>
+                                                <th>Job Amount</th>
+                                                <th>Receipt No.</th>
+                                                <th>Service</th>
+                                                <th>From Area</th>
+                                                <th>To Area</th>
+                                                <th>Created</th>
+                                                <th>Assigned</th>
+                                                <th>Completed</th>
+
+                                                <th>Options</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($jobs as $key => $job)
+                                                <tr>
+                                                    <td>{{$job->id }}</td>
+                                                    <td>{{display_date($job->date) }}</td>
+                                                    <td>{{$job->member_number }}</td>
+                                                    <td>{{display_date($job->member_expiry_date) }}</td>
+                                                    <td>{{$job->member_mobile }}</td>
+                                                    <td>{{$job->vehicle_no }}</td>
+                                                    <td>{{$job->customer_name }}</td>
+                                                    <td>{{$job->assign_to == 0 ? "AAA Driver: ".$job->driver_name :
+                                                        "Contractor : ".\App\Contractor::find($job->contractor_id)->name}}</td>
+                                                    <td>{{$job->driver_no }}</td>
+                                                    <td>{{$job->amount }}</td>
+                                                    <td>{{$job->receipt_no }}</td>
+                                                    <td>{{$job->service_name }}</td>
+                                                    <td>{{$job->from_area_name }}</td>
+                                                    <td>{{$job->to_area_name }}</td>
+                                                    <td>{{display_date_time($job->created_at) }}</td>
+                                                    <td>{{display_date_time($job->assigned_date) }}</td>
+                                                    <td>{{display_date_time($job->completed_date) }}</td>
+                                                    <td class="project-actions text-right">
+                                                        <div class="btn-group">
+                                                            <button type="button" class="btn btn-default">Options</button>
+                                                            <button type="button" class="btn btn-default dropdown-toggle dropdown-icon" data-toggle="dropdown">
+                                                                <span class="sr-only">Toggle Dropdown</span>
+                                                            </button>
+                                                            <div class="dropdown-menu" role="menu">
+                                                                <a class="dropdown-item" href="{{ route('job.show', $job->id) }}">View</a>
+                                                                @if(is_admin(\Illuminate\Support\Facades\Auth::user()->id) && $job->payment_status == 0
+                                                                    && is_have_access(9))
+                                                                    <a class="dropdown-item" href="{{ route('job.edit', $job->id) }}">Edit</a>
+                                                                @endif
+                                                                @if($job->status == 0  && is_have_access(11))
+                                                                    <a class="dropdown-item" href="{{ route('job.assign', $job->id) }}">Assign</a>
+                                                                @endif
+                                                                @if($job->status == 1  && is_have_access(12))
+                                                                    <a class="dropdown-item" href="{{ route('job.complete', $job->id) }}">Complete</a>
+                                                                @endif
+                                                                @if($job->status == 0 || $job->status == 1)
+                                                                    @if(is_have_access(94))
+                                                                        <button class="dropdown-item" onclick="showNotDoneJobModel({{$job->id}})">Not Done</button>
+                                                                    @endif
+                                                                    @if(is_have_access(6))
+                                                                        <button class="dropdown-item" onclick="showCancellJobModel({{$job->id}})">Cancel</button>
+                                                                    @endif
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+@endsection
+
+@section('script')
+    <script src="{{asset('public/plugins/datatables/jquery.dataTables.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-responsive/js/dataTables.responsive.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-responsive/js/responsive.bootstrap4.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-buttons/js/dataTables.buttons.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-buttons/js/buttons.bootstrap4.min.js')}}"></script>
+    <script src="{{asset('public/plugins/jszip/jszip.min.js')}}"></script>
+    <script src="{{asset('public/plugins/pdfmake/pdfmake.min.js')}}"></script>
+    <script src="{{asset('public/plugins/pdfmake/vfs_fonts.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-buttons/js/buttons.html5.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-buttons/js/buttons.print.min.js')}}"></script>
+    <script src="{{asset('public/plugins/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+    <script>
+        $(function () {
+            $("#example1").DataTable({
+
+                "responsive": true,
+                "lengthChange": false,
+                "ordering": true,
+                "order": [[0, 'desc']],
+                "autoWidth": false,
+                "buttons": [
+                    {
+                        extend: 'copy',
+                        exportOptions: {
+                            columns: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+                        }
+                    },
+                    {
+                        extend: 'csv',
+                        exportOptions: {
+                            columns: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+                        }
+                    },
+                    {
+                        extend: 'excel',
+                        exportOptions: {
+                            columns: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        orientation: 'landscape',
+                        pageSize: 'LEGAL',
+                        exportOptions: {
+                            columns: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+                        }
+                    },
+                    , "colvis"]
+            }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+
+        });
+    </script>
+@endsection
+
