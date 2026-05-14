@@ -2359,6 +2359,7 @@ public function view_get_jobs_list(Request $request)
         $jobs->where('jobs.customer_id', $request->customer_id);
     }
 
+    
     $jobs = $jobs->orderBy('jobs.date', 'desc')
                  ->orderBy('jobs.id', 'desc')
                  ->get()
